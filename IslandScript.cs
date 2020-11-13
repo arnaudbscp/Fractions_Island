@@ -25,7 +25,7 @@ public class IslandScript : MonoBehaviour
 
     void Start()
     {
-        //Initialisation des objets constructibles en objet IslandObject 
+        //Initialisation des objets constructibles en objet IslandObject
         GameObject bonfireButton = GameObject.Find("BonfireUpgradeButton");
         GameObject houseButton = GameObject.Find("HouseUpgradeButton");
         GameObject bridgeButton = GameObject.Find("BridgeUpgradeButton");
@@ -35,6 +35,7 @@ public class IslandScript : MonoBehaviour
 
         // Initialisation des autres variables
         updateMoney(0);
+        
     }
 
 

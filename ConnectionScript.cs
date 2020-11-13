@@ -23,6 +23,7 @@ public class ConnectionScript : MonoBehaviour
     public GameObject messageErrorText;
     public GameObject registerMenu;
     public GameObject signInMenu;
+    public GameObject Developpeur;
     
     // ------------- Variables C#   -------------------
     //Inputs
@@ -31,24 +32,35 @@ public class ConnectionScript : MonoBehaviour
     public string name;
     public bool isAStudent; // Indique si l'utilisateur qui s'inscrit ou qui se connecte est un élève ou non
     public bool isSigningIn = true; // Indique si le menu de connexion doit être affiché (true) ou si c'est celui d'inscription (false)
-
+    public Developpeur developpeur;
 
 
 
 
     // -------------   Lancement de la scene ----------------
+
+    public void writeNewDev(string nom, string prenom, char genre, int age, string mail)
+    {
+        Developpeur dev = new Developpeur(nom, prenom, genre, age, mail);
+        string json = JsonUtility.ToJson(dev);
+        
+        reference.Child("users/devs/").Child(user.UserId).SetRawJsonValueAsync(json);
+    }
+
     async void Start()
     {
         // Initialisation de Firebase
-        FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://piiperso.firebaseio.com/");
+        FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://dyscalculie-ensc.firebaseio.com/");
         reference = FirebaseDatabase.DefaultInstance.RootReference;
         auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
 
 
         // Verification de si un utilisateur est déjà connecté 
-        //auth.SignOut(); //Pour les tests
+        auth.SignOut(); //Pour les tests
 
         user = auth.CurrentUser;
+
+
 
         if (user != null)
         {
@@ -176,14 +188,14 @@ public class ConnectionScript : MonoBehaviour
         {
             Student newUser = new Student(email, name);
             string json = JsonUtility.ToJson(newUser);
-            reference.Child("users/students").Child(user.UserId).SetRawJsonValueAsync(json); //On considère que la fonction n'est appelé que si l'utilisateur existe, il n'y a pas de cas d'erreur
+            reference.Child("users/").Child(user.UserId).SetRawJsonValueAsync(json); //On considère que la fonction n'est appelé que si l'utilisateur existe, il n'y a pas de cas d'erreur
             Debug.Log("Student has been added to firebase");
         }
         else
         {
             Teacher newUser = new Teacher(email, name);
             string json = JsonUtility.ToJson(newUser);
-            reference.Child("users/teachers").Child(user.UserId).SetRawJsonValueAsync(json);
+            reference.Child("users/").Child(user.UserId).SetRawJsonValueAsync(json);
             Debug.Log("Teacher has been added to firebase");
         }
     }
@@ -207,7 +219,7 @@ public class ConnectionScript : MonoBehaviour
                 Debug.LogError("CreateUserWithEmailAndPasswordAsync encountered an error: " + task.Exception);
                 return;
             }
-                        Firebase.Auth.FirebaseUser newUser = task.Result;
+            Firebase.Auth.FirebaseUser newUser = task.Result;
             Debug.LogFormat("Firebase user created successfully: {0} ({1})", newUser.DisplayName, newUser.UserId);
         });
 
@@ -219,6 +231,7 @@ public class ConnectionScript : MonoBehaviour
         else //Si compte crée
         {
             writeNewUser();
+            writeNewDev("Arnaud","Bascop",'M', 21, "abascop@ensc.fr");
             AccessToNextScene();
         }
     }
@@ -232,6 +245,9 @@ public class ConnectionScript : MonoBehaviour
     /// </summary>
     public async void SignIn()
     {
+
+        writeNewDev("bascop", "arnaud", 'M', 21, "abascop@ensc.fr");
+
         await auth.SignInWithEmailAndPasswordAsync(email, password).ContinueWith(task =>
         {
             if (task.IsCanceled)

@@ -39,9 +39,9 @@ public class TeachersScript : MonoBehaviour
     // ------------- Lancement de la scene -------------------
 
     void Start()
-    { 
+    {
         // Initialisation de firebase
-        //FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://piiperso.firebaseio.com/");
+        //FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://dyscalculie-ensc.firebaseio.com/");
         //reference = FirebaseDatabase.DefaultInstance.RootReference;
         //auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
 

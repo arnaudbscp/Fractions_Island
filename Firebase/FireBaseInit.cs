@@ -19,7 +19,7 @@ public class FireBaseInit : MonoBehaviour
             var dependencyStatus = task.Result;
             if (dependencyStatus == DependencyStatus.Available)
             {
-                FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://projetinfo-4d778.firebaseio.com/");
+                FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://dyscalculie-ensc.firebaseio.com/");
                 OnFirebaseInitialized.Invoke();
             }
             else
@@ -29,4 +29,6 @@ public class FireBaseInit : MonoBehaviour
             }
         });
     }
+
+
 }
