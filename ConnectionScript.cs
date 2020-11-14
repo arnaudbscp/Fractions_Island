@@ -29,23 +29,12 @@ public class ConnectionScript : MonoBehaviour
     //Inputs
     public string email;
     public string password;
-    public string name;
+    public string username;
     public bool isAStudent; // Indique si l'utilisateur qui s'inscrit ou qui se connecte est un élève ou non
     public bool isSigningIn = true; // Indique si le menu de connexion doit être affiché (true) ou si c'est celui d'inscription (false)
-    public Developpeur developpeur;
-
-
 
 
     // -------------   Lancement de la scene ----------------
-
-    public void writeNewDev(string nom, string prenom, char genre, int age, string mail)
-    {
-        Developpeur dev = new Developpeur(nom, prenom, genre, age, mail);
-        string json = JsonUtility.ToJson(dev);
-        
-        reference.Child("users/devs/").Child(user.UserId).SetRawJsonValueAsync(json);
-    }
 
     async void Start()
     {
@@ -54,13 +43,11 @@ public class ConnectionScript : MonoBehaviour
         reference = FirebaseDatabase.DefaultInstance.RootReference;
         auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
 
-
         // Verification de si un utilisateur est déjà connecté 
-        auth.SignOut(); //Pour les tests
+
+        auth.SignOut(); //Pour les tests, à retirer
 
         user = auth.CurrentUser;
-
-
 
         if (user != null)
         {
@@ -76,53 +63,35 @@ public class ConnectionScript : MonoBehaviour
                         isAStudent = true;
                 }
             });
-
             AccessToNextScene();
         }
 
         // Si pas d'utilisateur connecté : initialisation des éléments de la scene
-
         isAStudent = true;
         changeColorTypeButton();
         messageErrorText.GetComponent<Text>().text = "";
     }
 
 
-    // ---------------  Gestion des inputs  --------------
+    // Gestion des inputs de la scène 
 
-    /// <summary>
-    ///  Gestion de l'input de l'Email
-    /// </summary>
     public void enterEmail(string theEmail)
     {
         email = theEmail;
     }
 
-
-    /// <summary>
-    ///  Gestion de l'input du mot de passe
-    /// </summary>
     public void enterPassword(string thePassword)
     {
         password = thePassword;
     }
 
-
-    /// <summary>
-    ///  Gestion de l'input du nom
-    /// </summary>
     public void enterName(string theName)
     {
         name = theName;
     }
 
 
-
- //  --------  Elements de navigation  -----------
-
-    /// <summary>
     /// Navigation entre les deux menus de connexion et d'inscription
-    /// </summary>
     public void switchMenu()
     {
         isSigningIn = !isSigningIn;
@@ -134,9 +103,10 @@ public class ConnectionScript : MonoBehaviour
             registerMenu.SetActive(true);
     }
 
-    /// <summary>
-    /// Charge la scene suivante, l'île pour un élève sinon l'interface des profs
-    /// </summary>
+
+    //-------------------------------------- PARTIE CONNEXION --------------------------------------
+
+    /// Si connecté, charge la scene suivante, l'île pour un élève sinon l'interface des profs
     private void AccessToNextScene()
     {
         if (isAStudent)
@@ -145,109 +115,10 @@ public class ConnectionScript : MonoBehaviour
             SceneManager.LoadScene("TeachersScreen");
     }
 
-    
 
-    // --------  Fonctions propre à l'inscription  -----------
-
-    /// <summary>
-    ///  Gère le paramètre élève/prof pendant l'inscription
-    /// </summary>
-    /// <param name="number"> 0 pour élève, 1 pour prof</param>
-    public void changeType(int number)
-    {
-        if (number == 0)
-            isAStudent = true;
-        else
-            isAStudent = false;
-        changeColorTypeButton();
-    }
-
-    /// <summary>
-    ///  Modification des couleurs des boutons élève/prof lors de l'inscription
-    /// </summary>
-    public void changeColorTypeButton()
-    {
-        studentButton.GetComponent<Image>().color = Color.white;
-        teacherButton.GetComponent<Image>().color = Color.white;
-
-        if (isAStudent)
-            studentButton.GetComponent<Image>().color = Color.blue;
-        else
-            teacherButton.GetComponent<Image>().color = Color.blue;
-
-
-    }
-
-
-    /// <summary>
-    /// Ajout d'un utilisateur dans la database
-    /// </summary>
-    public void writeNewUser()
-    {
-        if (isAStudent)
-        {
-            Student newUser = new Student(email, name);
-            string json = JsonUtility.ToJson(newUser);
-            reference.Child("users/").Child(user.UserId).SetRawJsonValueAsync(json); //On considère que la fonction n'est appelé que si l'utilisateur existe, il n'y a pas de cas d'erreur
-            Debug.Log("Student has been added to firebase");
-        }
-        else
-        {
-            Teacher newUser = new Teacher(email, name);
-            string json = JsonUtility.ToJson(newUser);
-            reference.Child("users/").Child(user.UserId).SetRawJsonValueAsync(json);
-            Debug.Log("Teacher has been added to firebase");
-        }
-    }
-
-
-    /// <summary>
-    /// Gère la création de compte sur le projet firebase, l'ajout à la database et l'acces à la scene suivante
-    /// </summary>
-    public async void Register()
-    {
-        // Création du compte sur le projet firebase
-        await auth.CreateUserWithEmailAndPasswordAsync(email, password).ContinueWith(task =>
-        {
-            if (task.IsCanceled)
-            {
-                Debug.LogError("CreateUserWithEmailAndPasswordAsync was canceled.");
-                return;
-            }
-            if (task.IsFaulted)
-            {
-                Debug.LogError("CreateUserWithEmailAndPasswordAsync encountered an error: " + task.Exception);
-                return;
-            }
-            Firebase.Auth.FirebaseUser newUser = task.Result;
-            Debug.LogFormat("Firebase user created successfully: {0} ({1})", newUser.DisplayName, newUser.UserId);
-        });
-
-        // Mise à jour de l'user
-        user = auth.CurrentUser;
-
-        if (user == null) //Si compte non crée
-            messageErrorText.GetComponent<Text>().text = "Erreur de saisie des données : adresse mail ou mot de passe non conforme";
-        else //Si compte crée
-        {
-            writeNewUser();
-            writeNewDev("Arnaud","Bascop",'M', 21, "abascop@ensc.fr");
-            AccessToNextScene();
-        }
-    }
-
-
-
-    // --------  Fonctions propre à la connexion  -----------
-
-    /// <summary>
     /// Gère la connexion au projet Firebase, la récupération du profil et le passage à la scene suivante
-    /// </summary>
     public async void SignIn()
     {
-
-        writeNewDev("bascop", "arnaud", 'M', 21, "abascop@ensc.fr");
-
         await auth.SignInWithEmailAndPasswordAsync(email, password).ContinueWith(task =>
         {
             if (task.IsCanceled)
@@ -288,39 +159,87 @@ public class ConnectionScript : MonoBehaviour
                         isAStudent = true;
                 }
             });
-
             AccessToNextScene();
         }
     }
 
-}
+    //-------------------------------------- PARTIE INSCRIPTION --------------------------------------
+    // reste à faire : vérification du code d'inscription pour les profs
+    // sélection des classes pour les profs
+    // sélection de la classe pr les élèves
 
-
-public class User
-{
-    public string email;
-    public string username;
-
-    public User(string email, string username)
+    ///  Gère le paramètre élève/prof pendant l'inscription
+    /// <param name="number"> 0 pour élève, 1 pour prof</param>
+    public void changeType(int number)
     {
-        this.email = email;
-        this.username = username;
+        if (number == 0)
+            isAStudent = true;
+        else
+            isAStudent = false;
+        changeColorTypeButton();
     }
-}
 
-public class Student : User
-{
-    public int money = 15;
+    ///  Modification des couleurs des boutons élève/prof lors de l'inscription
+    public void changeColorTypeButton()
+    {
+        studentButton.GetComponent<Image>().color = Color.white;
+        teacherButton.GetComponent<Image>().color = Color.white;
 
-    public Student(string email, string username) : base(email, username)
-    { }
-}
+        if (isAStudent)
+            studentButton.GetComponent<Image>().color = Color.blue;
+        else
+            teacherButton.GetComponent<Image>().color = Color.blue;
+    }
+    
+    /// Gère la création de compte sur le projet firebase, l'ajout à la database et l'acces à la scene suivante
+    public async void Register()
+    {
+        // Création du compte sur le projet firebase
+        await auth.CreateUserWithEmailAndPasswordAsync(email, password).ContinueWith(task =>
+        {
+            if (task.IsCanceled)
+            {
+                Debug.LogError("CreateUserWithEmailAndPasswordAsync was canceled.");
+                return;
+            }
+            if (task.IsFaulted)
+            {
+                Debug.LogError("CreateUserWithEmailAndPasswordAsync encountered an error: " + task.Exception);
+                return;
+            }
+            Firebase.Auth.FirebaseUser newUser = task.Result;
+            Debug.LogFormat("Firebase user created successfully: {0} ({1})", newUser.DisplayName, newUser.UserId);
+        });
 
-public class Teacher : User
-{
+        // Mise à jour de l'user
+        user = auth.CurrentUser;
 
-    public string[] students = new string[] { };
+        if (user == null) //Si compte non crée
+            messageErrorText.GetComponent<Text>().text = "Erreur de saisie des données : adresse mail ou mot de passe non conforme";
+        else //Si compte crée
+        {
+            writeNewUser();
+            AccessToNextScene();
+        }
+    }
 
-    public Teacher(string email, string username) : base(email, username)
-    { }
+    // Fonctions d'inscriptions pour User et Teacher
+    public void writeNewUser()
+    {
+        if (isAStudent)
+        {
+            Student newUser = new Student(email, name, password);
+            string json = JsonUtility.ToJson(newUser);
+            reference.Child("users/students/").Child(user.UserId).SetRawJsonValueAsync(json);
+            Debug.Log("Student has been added to firebase");
+        }
+        else
+        {
+            Teacher newUser = new Teacher(email, name, password);
+            string json = JsonUtility.ToJson(newUser);
+            reference.Child("users/teachers/").Child(user.UserId).SetRawJsonValueAsync(json);
+            Debug.Log("Teacher has been added to firebase");
+        }
+    }
+
 }
