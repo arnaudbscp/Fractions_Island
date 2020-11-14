@@ -4,9 +4,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using Firebase;
+using Firebase.Unity.Editor;
+using Firebase.Database;
 
 public class IslandScript : MonoBehaviour
 {
+
+    //  ---------- Variables pour Firebase  --------------
+    private Firebase.Auth.FirebaseAuth auth;
+    private Firebase.Auth.FirebaseUser user;
+
+
     // ----------- Elements utiles de la scene -------------
     public GameObject moneyText;
     public GameObject house;
@@ -17,14 +26,31 @@ public class IslandScript : MonoBehaviour
     public GameObject upgradeMenuCostText;
 
     // ----------- Variables C# -------------
-    private int money = 150;
+    private int money = 0;
     public int actualObjectID = 0;
     public List<IslandObject> islandObjects;
+    public Student current_student;
 
     // --------- Lancement de la scene ---------------
 
     void Start()
     {
+        // Initialisation de Firebase
+        FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://dyscalculie-ensc.firebaseio.com/");
+        auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
+
+        // On récupère l'utilisateur connecté
+        user = auth.CurrentUser;
+        // Sinon, on va se connecter
+        if (user == null)
+            SceneManager.LoadScene("Connection");
+        else
+        {
+            // On s'abonne à la base de données
+            FirebaseDatabase.DefaultInstance
+              .GetReference("users/students/" + user.UserId)
+              .ValueChanged += HandleValueChanged;
+        }
         //Initialisation des objets constructibles en objet IslandObject
         GameObject bonfireButton = GameObject.Find("BonfireUpgradeButton");
         GameObject houseButton = GameObject.Find("HouseUpgradeButton");
@@ -33,26 +59,34 @@ public class IslandScript : MonoBehaviour
                                             new IslandObject(2, house, houseButton, "la maison", 20, false),
                                             new IslandObject(3, bridge, bridgeButton, "le pont", 40, false)};
 
-        // Initialisation des autres variables
-        updateMoney(0);
-        
+
+
     }
 
-
+    void HandleValueChanged(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        // Do something with the data in args.Snapshot
+        DataSnapshot snapshot = args.Snapshot;
+        current_student = JsonUtility.FromJson<Student>(snapshot.GetRawJsonValue());
+        Debug.Log(current_student.money);
+        updateMoney(current_student.money);
+    }
 
     // --------- Gestion des éléments affichés sur la scene ---------------
-
-    /// <summary>
-    /// Met à jour la valeur de l'argent par +amount et modifie le texte affiché
-    /// </summary>
-    /// <param name="amount"></param>
+    /// Met à jour la valeur de l'argent par amount et modifie le texte affiché
     void updateMoney(int amount)
     {
         money += amount;
         moneyText.GetComponent<Text>().text = money.ToString();
     }
 
-     /// <summary>
+
+    /// <summary>
     /// Met à jour les objets qui doivent être affichés dans la scene ou non 
     /// </summary>
     public void updateVisibleObjects()

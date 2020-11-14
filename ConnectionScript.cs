@@ -115,7 +115,6 @@ public class ConnectionScript : MonoBehaviour
             SceneManager.LoadScene("TeachersScreen");
     }
 
-
     /// Gère la connexion au projet Firebase, la récupération du profil et le passage à la scene suivante
     public async void SignIn()
     {
