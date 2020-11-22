@@ -21,17 +21,22 @@ public class ConnectionScript : MonoBehaviour
     public GameObject studentButton;
     public GameObject teacherButton;
     public GameObject messageErrorText;
-    public GameObject registerMenu;
+    public GameObject registerMenuEleve;
     public GameObject signInMenu;
     public GameObject Developpeur;
-    
+    public GameObject registerMenuEns;
+    public GameObject PreInscription;
+
     // ------------- Variables C#   -------------------
-    //Inputs
     public string email;
     public string password;
     public string username;
+    public string teacherPassword;
+    const string TEACHER_VERIFICATION = "18765";
+    public string classe; // variable de l'élève
+    public string classes; // variable du prof
     public bool isAStudent; // Indique si l'utilisateur qui s'inscrit ou qui se connecte est un élève ou non
-    public bool isSigningIn = true; // Indique si le menu de connexion doit être affiché (true) ou si c'est celui d'inscription (false)
+    public bool isSigningIn = false; // Indique si le menu de connexion doit être affiché (true) ou si c'est celui d'inscription (false)
 
 
     // -------------   Lancement de la scene ----------------
@@ -68,8 +73,10 @@ public class ConnectionScript : MonoBehaviour
 
         // Si pas d'utilisateur connecté : initialisation des éléments de la scene
         isAStudent = true;
+        isSigningIn = false;
         changeColorTypeButton();
         messageErrorText.GetComponent<Text>().text = "";
+        switchMenu();
     }
 
 
@@ -87,7 +94,39 @@ public class ConnectionScript : MonoBehaviour
 
     public void enterName(string theName)
     {
-        name = theName;
+        username = theName;
+    }
+
+    public void enterTeacherPassword(string teachPassword)
+    {
+        teacherPassword = teachPassword;
+    }
+
+    // Modifier ici les fonctions et la scène sur Unity pour éditer les groupes
+    public void enterClasseCP()
+    {
+        classe = "CP";
+        classes += "CP;";
+    }
+    public void enterClasseCE1()
+    {
+        classe = "CE1";
+        classes += "CE1;";
+    }
+    public void enterClasseCE2()
+    {
+        classe = "CE2";
+        classes += "CE2;";
+    }
+    public void enterClasseCM1()
+    {
+        classe = "CM1";
+        classes += "CM1;";
+    }
+    public void enterClasseCM2()
+    {
+        classe = "CM2";
+        classes += "CM2;";
     }
 
 
@@ -96,11 +135,25 @@ public class ConnectionScript : MonoBehaviour
     {
         isSigningIn = !isSigningIn;
         signInMenu.SetActive(false);
-        registerMenu.SetActive(false);
+        PreInscription.SetActive(false);
+        registerMenuEns.SetActive(false);
+        registerMenuEleve.SetActive(false);
         if (isSigningIn)
             signInMenu.SetActive(true);
         else
-            registerMenu.SetActive(true);
+            PreInscription.SetActive(true);
+    }
+    public void GotoEl()
+    {
+        PreInscription.SetActive(false);
+        registerMenuEleve.SetActive(true);
+        isAStudent = true;
+    }
+    public void GotoEns()
+    {
+        PreInscription.SetActive(false);
+        registerMenuEns.SetActive(true);
+        isAStudent = false;
     }
 
 
@@ -135,7 +188,7 @@ public class ConnectionScript : MonoBehaviour
             Debug.LogFormat("User signed in successfully: {0} ({1})",
                 newUser.DisplayName, newUser.UserId);
         });
-    
+
         user = auth.CurrentUser;
         if (user == null)
             messageErrorText.GetComponent<Text>().text = "La combinaison Email/mot de passe n'est pas valide";
@@ -163,20 +216,6 @@ public class ConnectionScript : MonoBehaviour
     }
 
     //-------------------------------------- PARTIE INSCRIPTION --------------------------------------
-    // reste à faire : vérification du code d'inscription pour les profs
-    // sélection des classes pour les profs
-    // sélection de la classe pr les élèves
-
-    ///  Gère le paramètre élève/prof pendant l'inscription
-    /// <param name="number"> 0 pour élève, 1 pour prof</param>
-    public void changeType(int number)
-    {
-        if (number == 0)
-            isAStudent = true;
-        else
-            isAStudent = false;
-        changeColorTypeButton();
-    }
 
     ///  Modification des couleurs des boutons élève/prof lors de l'inscription
     public void changeColorTypeButton()
@@ -193,9 +232,11 @@ public class ConnectionScript : MonoBehaviour
     /// Gère la création de compte sur le projet firebase, l'ajout à la database et l'acces à la scene suivante
     public async void Register()
     {
-        // Création du compte sur le projet firebase
-        await auth.CreateUserWithEmailAndPasswordAsync(email, password).ContinueWith(task =>
+        if (string.Equals(TEACHER_VERIFICATION, teacherPassword) || isAStudent == true)
         {
+            // Création du compte sur le projet firebase
+            await auth.CreateUserWithEmailAndPasswordAsync(email, password).ContinueWith(task =>
+            {
             if (task.IsCanceled)
             {
                 Debug.LogError("CreateUserWithEmailAndPasswordAsync was canceled.");
@@ -208,17 +249,23 @@ public class ConnectionScript : MonoBehaviour
             }
             Firebase.Auth.FirebaseUser newUser = task.Result;
             Debug.LogFormat("Firebase user created successfully: {0} ({1})", newUser.DisplayName, newUser.UserId);
-        });
+            });
 
-        // Mise à jour de l'user
-        user = auth.CurrentUser;
+            // Mise à jour de l'user
+            user = auth.CurrentUser;
 
-        if (user == null) //Si compte non crée
-            messageErrorText.GetComponent<Text>().text = "Erreur de saisie des données : adresse mail ou mot de passe non conforme";
-        else //Si compte crée
+            if (user == null) //Si compte non crée
+                messageErrorText.GetComponent<Text>().text = "Erreur de saisie des données : adresse mail ou mot de passe non conforme";
+            else //Si compte crée
+            {
+                writeNewUser();
+                AccessToNextScene();
+            }
+        }
+
+        else
         {
-            writeNewUser();
-            AccessToNextScene();
+            Debug.Log("Wrong password teacher");
         }
     }
 
@@ -227,14 +274,37 @@ public class ConnectionScript : MonoBehaviour
     {
         if (isAStudent)
         {
-            Student newUser = new Student(email, name, password);
+            Student newUser = new Student(email, username, password, classe);
             string json = JsonUtility.ToJson(newUser);
             reference.Child("users/students/").Child(user.UserId).SetRawJsonValueAsync(json);
             Debug.Log("Student has been added to firebase");
         }
         else
         {
-            Teacher newUser = new Teacher(email, name, password);
+            string[] classesTabTmp = classes.Split(';');
+            string res = "";
+            int occ = 0;
+            for (int i = 0; i < classesTabTmp.Length; i++)
+            {
+                for (int j = 0; j < classesTabTmp.Length; j++)
+                {
+                    if (string.Equals(classesTabTmp[i], classesTabTmp[j]))
+                        occ += 1;
+                }
+                if (occ % 2 != 0)
+                {
+                    bool uniq = true;
+                    for (int j = 0; j < res.Split(';').Length; j++)
+                    {
+                        if (res.Split(';')[j] == classesTabTmp[i])
+                            uniq = false;
+                    }
+                    if (uniq)
+                        res += classesTabTmp[i] + ";";
+                }
+                occ = 0;
+            }
+            Teacher newUser = new Teacher(email, username, password, res.Split(';'));
             string json = JsonUtility.ToJson(newUser);
             reference.Child("users/teachers/").Child(user.UserId).SetRawJsonValueAsync(json);
             Debug.Log("Teacher has been added to firebase");
