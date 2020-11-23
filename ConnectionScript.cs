@@ -50,8 +50,6 @@ public class ConnectionScript : MonoBehaviour
 
         // Verification de si un utilisateur est déjà connecté 
 
-        auth.SignOut(); //Pour les tests, à retirer
-
         user = auth.CurrentUser;
 
         if (user != null)

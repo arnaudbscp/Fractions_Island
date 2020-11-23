@@ -14,7 +14,7 @@ public class IslandScript : MonoBehaviour
     //  ---------- Variables pour Firebase  --------------
     private Firebase.Auth.FirebaseAuth auth;
     private Firebase.Auth.FirebaseUser user;
-
+    private DatabaseReference reference;
 
     // ----------- Elements utiles de la scene -------------
     public GameObject moneyText;
@@ -24,11 +24,20 @@ public class IslandScript : MonoBehaviour
     public GameObject upgradeMenu;
     public GameObject upgradeMenuBuildingNameText;
     public GameObject upgradeMenuCostText;
+    public GameObject bonfireButton;
+    public GameObject houseButton;
+    public GameObject bridgeButton;
+    public GameObject profileButton;
+    public GameObject profile1;
+    public GameObject profile2;
+    public GameObject profile3;
+    public GameObject profile0;
+    public GameObject upgradesAvatar;
 
     // ----------- Variables C# -------------
     private int money = 0;
     public int actualObjectID = 0;
-    public List<IslandObject> islandObjects;
+    public List<Island> Islands;
     public Student current_student;
 
     // --------- Lancement de la scene ---------------
@@ -37,6 +46,7 @@ public class IslandScript : MonoBehaviour
     {
         // Initialisation de Firebase
         FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://dyscalculie-ensc.firebaseio.com/");
+        reference = FirebaseDatabase.DefaultInstance.RootReference;
         auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
 
         // On récupère l'utilisateur connecté
@@ -51,18 +61,18 @@ public class IslandScript : MonoBehaviour
               .GetReference("users/students/" + user.UserId)
               .ValueChanged += HandleValueChanged;
         }
-        //Initialisation des objets constructibles en objet IslandObject
-        GameObject bonfireButton = GameObject.Find("BonfireUpgradeButton");
-        GameObject houseButton = GameObject.Find("HouseUpgradeButton");
-        GameObject bridgeButton = GameObject.Find("BridgeUpgradeButton");
-        islandObjects = new List<IslandObject> { new IslandObject(1, bonfire, bonfireButton, "le feu de camp", 10, false),
-                                            new IslandObject(2, house, houseButton, "la maison", 20, false),
-                                            new IslandObject(3, bridge, bridgeButton, "le pont", 40, false)};
 
-
+        //Initialisation des objets constructibles en objet Island
+        bonfireButton = GameObject.Find("BonfireUpgradeButton");
+        houseButton = GameObject.Find("HouseUpgradeButton");
+        bridgeButton = GameObject.Find("BridgeUpgradeButton");
+        Islands = new List<Island> { new Island(1, bonfire, bonfireButton, "le feu de camp", 15, false),
+                                            new Island(2, house, houseButton, "la maison", 30, false),
+                                            new Island(3, bridge, bridgeButton, "le pont", 45, false)};
 
     }
 
+    // Récupération de l'utilisateur actuel, mise à jour des infos
     void HandleValueChanged(object sender, ValueChangedEventArgs args)
     {
         if (args.DatabaseError != null)
@@ -70,46 +80,54 @@ public class IslandScript : MonoBehaviour
             Debug.LogError(args.DatabaseError.Message);
             return;
         }
-        // Do something with the data in args.Snapshot
         DataSnapshot snapshot = args.Snapshot;
         current_student = JsonUtility.FromJson<Student>(snapshot.GetRawJsonValue());
-        Debug.Log(current_student.money);
         updateMoney(current_student.money);
+        // Selectionne l'avatar et mets à jour les objets visibles en meme temps
+        selectAvatar(current_student.avatar);
     }
 
-    // --------- Gestion des éléments affichés sur la scene ---------------
     /// Met à jour la valeur de l'argent par amount et modifie le texte affiché
     void updateMoney(int amount)
     {
-        money += amount;
+        money = amount;
         moneyText.GetComponent<Text>().text = money.ToString();
     }
 
-
-    /// <summary>
-    /// Met à jour les objets qui doivent être affichés dans la scene ou non 
-    /// </summary>
+    /// Met à jour les objets qui doivent être affichés dans la scene selon progression 
     public void updateVisibleObjects()
     {
-        foreach(IslandObject oneObject in islandObjects)
+        bonfireButton.SetActive(true);
+        houseButton.SetActive(true);
+        bridgeButton.SetActive(true);
+        foreach (string i in current_student.avancement_carte)
         {
-            oneObject.unityObject.SetActive(oneObject.active);
-            oneObject.button.SetActive(!oneObject.active);
+            if (i.Equals("le feu de camp"))
+            {
+                bonfire.SetActive(true);
+                bonfireButton.SetActive(false);
+            }
+                
+
+            if(i.Equals("le pont"))
+            {
+                bridge.SetActive(true);
+                bridgeButton.SetActive(false);
+            }
+
+            if(i.Equals("la maison"))
+            {
+                house.SetActive(true);
+                houseButton.SetActive(false);
+            }
         }
     }
 
-    
-
-    // --------- Element pour l'amélioration de l'île  -------------
-
-    /// <summary>
     /// Ouvre le menu d'amélioration avec les informations de l'objet concerné
-    /// </summary>
-    /// <param name="theID"></param>
     public void openUpgradeMenu(int theID)
     {
         actualObjectID = theID;
-        foreach (IslandObject oneObject in islandObjects)
+        foreach (Island oneObject in Islands)
         {
             oneObject.button.SetActive(false); //Désactivation de tous les boutons d'amélioration pour ne pas qu'ils ne supposent au menu d'amélioration
             if (oneObject.id == actualObjectID)  // Récupération des informations de l'objet concerné
@@ -121,65 +139,87 @@ public class IslandScript : MonoBehaviour
         }
     }
 
-    /// <summary>
+    /// Ouvre le menu des avatars avec les informations de l'objet concerné
+    public void openUpgradeAvatar()
+    {
+        foreach (Island oneObject in Islands)
+        {
+            oneObject.button.SetActive(false); //Désactivation de tous les boutons d'amélioration pour ne pas qu'ils ne supposent au menu d'amélioration
+
+        }
+        upgradesAvatar.SetActive(true);
+    }
+
+    /// Selectionne l'avatar et ferme le menu
+    public void selectAvatar(int id)
+    {
+        upgradesAvatar.SetActive(false);
+        updateVisibleObjects();
+        current_student.avatar = id;
+        profile0.SetActive(false);
+        if (id == 1)
+           profile1.SetActive(true);
+        else if(id == 2)
+            profile2.SetActive(true);
+        else if(id == 3)
+            profile3.SetActive(true);
+        else
+            profile0.SetActive(true);
+        updateStudent();
+    }
+
     /// Ferme le menu d'amélioration et met à jour les éléments visibles de la scene
-    /// </summary>
     public void closeUpgradeMenu()
     {
         updateVisibleObjects();
         upgradeMenu.SetActive(false);
     }
 
-    /// <summary>
     /// Verifie si l'utilisateur a assez d'argent pour l'objet, ferme le menu et met à jour les éléments affichés dans la scene
-    /// </summary>
     public void validateUpgradeItem()
     {
-        foreach (IslandObject oneObject in islandObjects)
+        foreach (Island oneObject in Islands)
         {
             if (oneObject.id == actualObjectID)
-                if (money >= oneObject.cost) //Verification de si l'utilisateur a assez d'argent
+                if (money >= oneObject.cost)
                 {
-                    updateMoney(- oneObject.cost);
+                    current_student.money = current_student.money - oneObject.cost;
+                    updateMoney(current_student.money);
+                    string[] tmp = new string[current_student.avancement_carte.Length + 1];
+                    if (current_student.avancement_carte.Length == 0)
+                        tmp[0] = oneObject.name;
+                    else
+                    {
+                        for (int i = 0; i < tmp.Length - 1; i++)
+                            tmp[i] = current_student.avancement_carte[i];
+                        tmp[tmp.Length - 1] = oneObject.name;
+                    }
+                    current_student.avancement_carte = tmp;
+                    updateStudent();
                     oneObject.active = true;
                 }
         }
         closeUpgradeMenu();
     }
 
+    /// Mettre à jour l'utilisateur sur la base de données
+    public void updateStudent()
+    {
+        string json = JsonUtility.ToJson(current_student);
+        reference.Child("users/students/").Child(user.UserId).SetRawJsonValueAsync(json);
+    }
 
-
-
-    // --------- Navigation vers d'autres scenes  -------------
-
-    /// <summary>
     /// Navigation vers l'écran de sélection des jeux
-    /// </summary>
     public void StartTheGame()
     {
         SceneManager.LoadScene(2);
-            }
-
-}
-
-
-public class IslandObject
-{
-    public int id;
-    public GameObject unityObject;
-    public GameObject button;
-    public string name;
-    public int cost;
-    public bool active;
-
-    public IslandObject(int newId, GameObject newObject, GameObject itsButton, string newName, int newCost, bool isActive)
-      {
-        id = newId;
-        unityObject = newObject;
-        button = itsButton;
-        name = newName;
-        cost = newCost;
-        active = isActive;
-        unityObject.SetActive(active);
     }
+
+    /// Se déconnecter
+    public void QuitTheGame()
+    {
+        auth.SignOut();
+        SceneManager.LoadScene("Connection");
+    }
+
 }
