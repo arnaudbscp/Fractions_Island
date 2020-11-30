@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LevelLauchScript : MonoBehaviour
+public class LancerJeu : MonoBehaviour
 {
     public void LoadLevel()
     {
         //On recupère le numéro du niveau et du jeu
         int gameId = LevelManager.GetParameter("gameId");
         int levelId = LevelManager.GetParameter("levelId");
-
         if (gameId==1)
         {
             if (levelId==1)

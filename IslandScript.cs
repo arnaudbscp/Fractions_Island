@@ -68,7 +68,7 @@ public class IslandScript : MonoBehaviour
         bridgeButton = GameObject.Find("BridgeUpgradeButton");
         Islands = new List<Island> { new Island(1, bonfire, bonfireButton, "le feu de camp", 15, false),
                                             new Island(2, house, houseButton, "la maison", 30, false),
-                                            new Island(3, bridge, bridgeButton, "le pont", 45, false)};
+                                            new Island(3, bridge, bridgeButton, "le pont", 55, false)};
 
     }
 
@@ -212,7 +212,7 @@ public class IslandScript : MonoBehaviour
     /// Navigation vers l'écran de sélection des jeux
     public void StartTheGame()
     {
-        SceneManager.LoadScene(2);
+        SceneManager.LoadScene("MainMenu");
     }
 
     /// Se déconnecter

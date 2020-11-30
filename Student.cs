@@ -4,7 +4,7 @@
 public class Student : User
 {
     public int money = 0;
-    public string[] progression = new string[] { "Not Started" };
+    public int[] progression = new int[] {1,1}; // Jeu et Niveau
     public string[] temps = new string[] { "Not Started" };
     public string[] nb_erreurs = new string[] { "Not Started" };
     public string[] clics_sur_aide = new string[] { "Not Started" };
@@ -15,7 +15,10 @@ public class Student : User
 
     public Student(string email, string username, string password, string classe) : base(email, username, password)
     {
-        this.classe = classe;
+        if (classe.Equals(""))
+            this.classe = "CP";
+        else
+            this.classe = classe;
     }
 
 

@@ -3,7 +3,15 @@ guid: 8815586f0a91a43729c9aaddce9db839
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - exercice: {instanceID: 0}
+  - suivant: {instanceID: 0}
+  - lls: {instanceID: 0}
+  - indNiv1: {instanceID: 0}
+  - indNiv2: {instanceID: 0}
+  - indNiv3: {instanceID: 0}
+  - indNiv4: {instanceID: 0}
+  - scoreGO: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
