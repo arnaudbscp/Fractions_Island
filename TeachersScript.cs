@@ -1,4 +1,4 @@
-﻿        using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,9 +17,9 @@ public class TeachersScript : MonoBehaviour
 
     //  ---------- Variables pour Firebase  --------------
 
-    //private DatabaseReference reference;
-    //private Firebase.Auth.FirebaseAuth auth;
-    //private Firebase.Auth.FirebaseUser user;
+    private DatabaseReference reference;
+    private Firebase.Auth.FirebaseAuth auth;
+    private Firebase.Auth.FirebaseUser user;
 
 
     // ----------- Elements utiles de la scene -------------
@@ -28,11 +28,17 @@ public class TeachersScript : MonoBehaviour
     public GameObject addStudentMenu;
     public GameObject alertText;
     public GameObject classicText;
+    public GameObject statistiquesText;
+    public GameObject MenuEnseignant;
+    public GameObject MenuJeux;
 
 
     // ------------- Variables C#   -------------------
 
-    public List<string> studentsID; //Liste des élèves 
+    public List<string> studentsID; //Liste des élèves
+    public Teacher current_teacher; //Liste des élèves 
+    public List<Student> eleves; //Liste des élèves 
+    public SortedList<string, string> studentStat;//chaines de caracteres contenant toutes les statistiques correspondant a un eleve, pseudo de l'eleve est la clef
     public string enterStudentID;
 
 
@@ -40,25 +46,81 @@ public class TeachersScript : MonoBehaviour
 
     void Start()
     {
-        // Initialisation de firebase
-        //FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://dyscalculie-ensc.firebaseio.com/");
-        //reference = FirebaseDatabase.DefaultInstance.RootReference;
-        //auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
+        FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://dyscalculie-ensc.firebaseio.com/");
+        reference = FirebaseDatabase.DefaultInstance.RootReference;
+        auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
+        
+        // On récupère l'utilisateur connecté
+        user = auth.CurrentUser;
+        // Sinon, on va se connecter
+        if (user == null)
+            SceneManager.LoadScene("Connection");
+        else
+        {
+            // On s'abonne à la base de données
+            FirebaseDatabase.DefaultInstance
+            .GetReference("users/teachers/" + user.UserId)
+            .ValueChanged += HandleValueChanged;
 
-        //user = auth.CurrentUser;
+            // On récupère les élèves
+            FirebaseDatabase.DefaultInstance
+            .GetReference("users/students/").GetValueAsync().ContinueWith(task => {
+                if (task.IsFaulted)
+                {
+                    Debug.Log(task.Exception.Message);
+                }
+                else if (!task.Result.HasChildren)
+                {
+                    Debug.Log("no children!");
+                }
+                else
+                {
+                    eleves = new List<Student>();
+                    foreach (var child in task.Result.Children)
+                    {
+                        eleves.Add(JsonUtility.FromJson<Student>(child.GetRawJsonValue()));
+                    }
+                    // Initialisation des variables C#
+                    studentsID = new List<string>();
+                    foreach (Student e in eleves)
+                    {
+                        foreach(string c in current_teacher.classes)
+                            if(e.classe.Equals(c))
+                                studentsID.Add(e.username);
+                    }
+                }
+            });
 
-        // Initialisation des variables C#
-        studentsID = new List<string> { "Alban", "Lucie", "Manon", "Alex"};
+        }
+        
+        // Mise à jour des stats à faire
+        studentStat = new SortedList<string, string>();//associer chaque pseudo a statistiques ex: moyenne =14 etc. en fonction des stats qu'on aura
         alertText.GetComponent<Text>().text = "";
 
     }
 
+    // Récupération de l'utilisateur actuel, mise à jour des infos
+    void HandleValueChanged(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        DataSnapshot snapshot = args.Snapshot;
+        current_teacher = JsonUtility.FromJson<Teacher>(snapshot.GetRawJsonValue());
+    }
+
+    // Déconnexion
+    public void deconnexion()
+    {
+        auth.SignOut();
+        SceneManager.LoadScene("Connection");
+    }
 
     // ---------------- Fonctions de navigation  --------------------
-    
-    /// <summary>
+
     /// Ouvre le menu latéral
-    /// </summary>
     public void OpenSlideMenu()
     {
         slideMenu.SetActive(true);
@@ -66,111 +128,111 @@ public class TeachersScript : MonoBehaviour
         slideMenuOpenButton.SetActive(false);
     }
 
-    /// <summary>
     /// Ferme le menu latéral
-    /// </summary>
     public void CloseSlideMenu()
     {
         slideMenu.SetActive(false);
         slideMenuOpenButton.SetActive(true);
     }
 
-    /// <summary>
     /// Ouvre le menu d'ajout d'élève
-    /// </summary>
     public void OpenAddStudentMenu()
     {
         addStudentMenu.SetActive(true);
     }
-    
-    /// <summary>
+
     /// Ferme le menu d'ajour d'élève
-    /// </summary>
     public void CloseAddStudentMenu()
     {
         addStudentMenu.SetActive(false);
     }
 
+    public void OpenJeux()
+    {
+        MenuEnseignant.SetActive(false);
+        MenuJeux.SetActive(true);
+    }
+
+    public void Retour()
+    {
+        MenuJeux.SetActive(false);
+        MenuEnseignant.SetActive(true);
+    }
+
 
     // ---------------- Fonctions liées au slideMenu  --------------------
 
-    /// <summary>
     /// Met à jour les élèves affichés dans le slideMenu
-    /// </summary>
-    public void UpdateStudents()
-    { // S'assurer que le slideMenu est bien ouvert quand cette fonction est utilisée 
+    public void UpdateStudents()//cette fonction ajoute un student
+    {
         int i = 0;
-        foreach(string student in studentsID)
+        foreach (string student in studentsID)
         {
             i++;
             string objectName = "Text" + i.ToString();
             GameObject studentText = GameObject.Find(objectName);
             studentText.GetComponent<Text>().text = student;
+
         }
     }
 
-    /// <summary>
     /// Modifie l'élève affiché par celui sur le quel l'enseignant a appuyé
-    /// </summary>
+    /// Stats à afficher
     public void UpdateSelectedStudent(int i)
     {
         if (i <= studentsID.Count)
+        {
             classicText.GetComponent<Text>().text = "L'élève sélectionné est " + studentsID[i];
+            statistiquesText.GetComponent<Text>().text = "Statistiques: " + studentStat[studentsID[i]];//on affiche les stat de l'eleve
+        }
         else
-            classicText.GetComponent<Text>().text = "Aucun élève sélectionné." ;
+            classicText.GetComponent<Text>().text = "Aucun élève sélectionné.";
     }
+
 
 
     // ------- Fonctions pour le menu d'ajout d'élève ------------
 
-
-    /// <summary>
     /// Mise à jour du paramètre enterStudentID
-    /// </summary>
     public void EnterID(string theID)
     {
         enterStudentID = theID;
     }
 
-    /// <summary>
     /// Ajoute l'ID de l'étudiant entré dans la liste d'élève du prof
-    /// </summary>
     public void AddStudent()
     {
-        // Récupération des données non finie, penser à ajouter le "async" quand réutilisé
-        //bool worked = false;
-        //DataSnapshot snapshot;
-
-        //string path = "users/students/" + studentID + "/email";
-        //await FirebaseDatabase.DefaultInstance.GetReference(path).GetValueAsync().ContinueWith(task =>
-        //{
-        //    if (task.IsCompleted)
-        //    {
-        //        snapshot = task.Result;
-        //        if (snapshot.Exists)
-        //        {
-        //            Debug.Log("d");
-        //            worked = true;
-        //        }
-        //        else
-        //        {
-        //            Debug.Log("e");
-        //        }
-        //    }
-        //});
-
-        //if (worked)
-        //{ alertText.GetComponent<Text>().text = "L'élève a bien été enregistré.";
-        //    studentsID.Add(studentID);
-        //    studentID = "";
-        //}
-        //else
-        //    alertText.GetComponent<Text>().text = "Cet ID ne correspond à aucun élève.";
-
-        studentsID.Add(enterStudentID);
-        UpdateStudents();
-        alertText.GetComponent<Text>().text = "L'élève a bien été enregistré.";
-
+        // On récupère les élèves
+        FirebaseDatabase.DefaultInstance
+        .GetReference("users/students/").GetValueAsync().ContinueWith(task => {
+            if (task.IsFaulted)
+            {
+                Debug.Log(task.Exception.Message);
+            }
+            else if (!task.Result.HasChildren)
+            {
+                Debug.Log("no children!");
+            }
+            else
+            {
+                foreach (var child in task.Result.Children)
+                {
+                    eleves.Add(JsonUtility.FromJson<Student>(child.GetRawJsonValue()));
+                }
+                foreach (Student e in eleves)
+                {
+                    if (e.username.Equals(enterStudentID))
+                    {
+                        if(!studentsID.Contains(e.username))
+                        {
+                            studentsID.Add(e.username);
+                        }
+                    }    
+                }
+            }
+        });
+        CloseSlideMenu();
+        CloseAddStudentMenu();
     }
 
 }
