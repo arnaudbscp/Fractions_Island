@@ -1,6 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using Firebase;
+using Firebase.Unity.Editor;
+using Firebase.Database;
+using System;
 
 public class ExerciceScript : MonoBehaviour
 {
@@ -15,12 +19,55 @@ public class ExerciceScript : MonoBehaviour
     public ItemSlot slot6=null;
     public ItemSlot slot7=null;
     public ItemSlot slot8=null;
+    public DateTime debut;
+    public DateTime fin;
 
     private ItemSlot[] tableauSlots;
 
     //--------------------------Gestion de l'apparition des explications
     internal int nbTotalErreurs=0;
     public Explications explications;
+
+    //  ---------- Variables pour Firebase  --------------
+    private Firebase.Auth.FirebaseAuth auth;
+    private Firebase.Auth.FirebaseUser user;
+    private DatabaseReference reference;
+
+    public Student current_student;
+
+    void Start()
+    {
+        // Initialisation de Firebase
+        FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://dyscalculie-ensc.firebaseio.com/");
+        reference = FirebaseDatabase.DefaultInstance.RootReference;
+        auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
+
+        // On récupère l'utilisateur connecté
+        user = auth.CurrentUser;
+        // Sinon, on va se connecter
+        if (user == null)
+            SceneManager.LoadScene("Connection");
+        else
+        {
+            // On s'abonne à la base de données
+            FirebaseDatabase.DefaultInstance
+              .GetReference("users/students/" + user.UserId)
+              .ValueChanged += HandleValueChanged;
+        }
+
+    }
+
+    // Récupération de l'utilisateur actuel, mise à jour des infos
+    void HandleValueChanged(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        DataSnapshot snapshot = args.Snapshot;
+        current_student = JsonUtility.FromJson<Student>(snapshot.GetRawJsonValue());
+    }
 
     public void Awake()
     {
@@ -38,6 +85,7 @@ public class ExerciceScript : MonoBehaviour
         {
             tableauReponses[i] = 0; //On met tout à non reussi
         }
+        debut = DateTime.Now;
     }
 
     public void ReussirTache(int nbSlot)
@@ -83,11 +131,18 @@ public class ExerciceScript : MonoBehaviour
 
     public void IncrementerErreurs(ItemSlot slot)
     {
-        //On note que pour ce slot, il y a eu une erreur
+        string[] tmp = new string[current_student.nb_erreurs.Length+1];
+        for (int i = 0; i < tmp.Length - 1; i++)
+            tmp[i] = current_student.nb_erreurs[i];
+        // On note que pour ce slot, il y a eu une erreur
         slot.nbErreurs++;
         explications.affichageExplication(slot);
-        //On incrémente aussi le nombre d'erreurs général
+        // On incrémente aussi le nombre d'erreurs général
         nbTotalErreurs++;
+        tmp[tmp.Length - 1] = current_student.progression[0] + ":" + current_student.progression[1] + ":" + slot.name + ":" + nbTotalErreurs; // Partie:Niveau:Nom:ErreurTotalDuNiveau
+        current_student.nb_erreurs = tmp;
+        string json = JsonUtility.ToJson(current_student);
+        reference.Child("users/students/").Child(user.UserId).SetRawJsonValueAsync(json);
     }
 
     public bool VerifierNiveauReussi()
@@ -104,6 +159,14 @@ public class ExerciceScript : MonoBehaviour
         if (compteur==nbTotalTaches)
         {
             niveauReussi = true;
+            fin = DateTime.Now;
+            string[] tmp = new string[current_student.temps.Length + 1];
+            for (int i = 0; i < tmp.Length - 1; i++)
+                tmp[i] = current_student.temps[i];
+            tmp[tmp.Length - 1] = current_student.progression[0] + ";" + current_student.progression[1] + ";" + (fin - debut); // Partie;Niveau;Temps
+            current_student.temps = tmp;
+            string json = JsonUtility.ToJson(current_student);
+            reference.Child("users/students/").Child(user.UserId).SetRawJsonValueAsync(json);
         }
         else
         {

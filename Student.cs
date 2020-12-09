@@ -4,12 +4,12 @@
 public class Student : User
 {
     public int money = 0;
-    public int[] progression = new int[] {1,1}; // Jeu et Niveau
-    public string[] temps = new string[] { "Not Started" };
-    public string[] nb_erreurs = new string[] { "Not Started" };
-    public string[] clics_sur_aide = new string[] { "Not Started" };
+    public int[] progression = new int[] {1,1}; // Partie et Niveau
+    public string[] temps = new string[] { "Not Started" }; // Partie;Niveau;Temps
+    public string[] nb_erreurs = new string[] { "Not Started" }; // "Partie:Niveau:NomZone:ErreurTotalDuNiveau"
+    public string[] clics_sur_aide = new string[] { "Not Started" }; // "Partie:Niveau"
     public string classe;
-    public int score_invisible = 0;
+    public int score_invisible = 0; // 
     public string[] avancement_carte = new string[] { "Not Started" };
     public int avatar = 0;
 

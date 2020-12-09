@@ -44,7 +44,6 @@ public class HUDScript : MonoBehaviour
 
     void Start()
     {
-
         // Initialisation de Firebase
         FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://dyscalculie-ensc.firebaseio.com/");
         reference = FirebaseDatabase.DefaultInstance.RootReference;
@@ -62,7 +61,7 @@ public class HUDScript : MonoBehaviour
               .GetReference("users/students/" + user.UserId)
               .ValueChanged += HandleValueChanged;
         }
-        
+
     }
 
     // Récupération de l'utilisateur actuel, mise à jour des infos
@@ -90,6 +89,28 @@ public class HUDScript : MonoBehaviour
         espaceAAfficher.SetActive(true);
     }
 
+    // Affiche Aide
+    public void AfficherAide(GameObject espaceAAfficher)
+    {
+        espaceAAfficher.SetActive(true);
+        string[] tmp = new string[current_student.clics_sur_aide.Length + 1];
+        for (int i = 0; i < tmp.Length - 1; i++)
+            tmp[i] = current_student.clics_sur_aide[i];
+        if (current_student.progression[0] == 1 && current_student.progression[1] == 3)
+        {
+            tmp[tmp.Length - 1] = (current_student.progression[0]+1) + ":1"; // Partie:Niveau
+        }
+        else if (current_student.progression[0] == 2 && current_student.progression[1] == 3)
+        {
+            tmp[tmp.Length - 1] = (current_student.progression[0] + 1) + ":1"; // Partie:Niveau
+        }
+        else
+            tmp[tmp.Length - 1] = current_student.progression[0] + ":" + current_student.progression[1]; // Partie:Niveau
+        current_student.clics_sur_aide = tmp;
+        string json = JsonUtility.ToJson(current_student);
+        reference.Child("users/students/").Child(user.UserId).SetRawJsonValueAsync(json);
+    }
+
     // Affiche l'argent
     public void AfficherScore()
     {
@@ -101,13 +122,13 @@ public class HUDScript : MonoBehaviour
     // Ferme des GameObjects
     public void Fermer(GameObject espaceAFermer)
     {
-       espaceAFermer.SetActive(false);
+        espaceAFermer.SetActive(false);
     }
 
     // Autoriser à passer au niveau suivant
     public void AutoriserSuivant()
     {
-        if (suivant!=null)
+        if (suivant != null)
         {
             suivant.interactable = true;
         }
@@ -118,14 +139,15 @@ public class HUDScript : MonoBehaviour
     {
         int gameId = LevelManager.GetParameter("gameId");
         int levelId = LevelManager.GetParameter("levelId");
-        if(gameId == 2 && levelId == 1)
+        if (gameId == 2 && levelId == 1)
         {
             current_student.money += 15;
-        }else if(gameId == 3 && levelId == 1)
+        }
+        else if (gameId == 3 && levelId == 1)
         {
             current_student.money += 30;
         }
-        else if(gameId == 3 && levelId == 5)
+        else if (gameId == 3 && levelId == 5)
         {
             current_student.money += 55;
         }
@@ -144,7 +166,7 @@ public class HUDScript : MonoBehaviour
         GameObject[] listeImages = { img1, img2, img3 };
         GameObject[] listeConsignes = { textConsigne1, textConsigne2, textConsigne3 };
         int gameId = current_student.progression[0];
-        int levelId = current_student.progression[1]-1;
+        int levelId = current_student.progression[1] - 1;
         listeBoutons[gameId - 1].interactable = true;
         listeImages[gameId - 1].SetActive(true);
         Text t = listeConsignes[gameId - 1].GetComponent<Text>();
@@ -152,21 +174,21 @@ public class HUDScript : MonoBehaviour
         {
             t.text = "Début : 0/3";
         }
-        if(levelId == 1)
+        if (levelId == 1)
         {
             t.text = "Début : 1/3";
         }
-        if(levelId == 2)
+        if (levelId == 2)
         {
             t.text = "Milieu : 2/3";
-                
+
         }
-        if(levelId > 2)
+        if (levelId > 2)
         {
             t.text = "Fin : 3/3";
         }
         LevelManager.SetParameter("gameId", gameId);
-        LevelManager.SetParameter("levelId", levelId+1);
+        LevelManager.SetParameter("levelId", levelId + 1);
     }
 
     // Permet de démmarrer le niveau suivant depuis l'exercice
@@ -189,7 +211,6 @@ public class HUDScript : MonoBehaviour
                 LevelManager.SetParameter("levelId", levelId);
                 EnregistrerProgression();
                 lj.Suite(depuisMenu);
-
             }
         }
         if (depuisMenu == true)
