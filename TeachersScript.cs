@@ -31,13 +31,30 @@ public class TeachersScript : MonoBehaviour
     public GameObject statistiquesText;
     public GameObject MenuEnseignant;
     public GameObject MenuJeux;
-
+    // Stats
+    public GameObject StatsTemps;
+    public GameObject StatsErreurs;
+    public GameObject StatsAides;
+    public GameObject Graphe;
+    public GameObject petit1;
+    public GameObject petit2;
+    public GameObject petit3;
+    public GameObject petit11;
+    public GameObject petit22;
+    public GameObject petit33;
+    public GameObject petit111;
+    public GameObject petit222;
+    public GameObject petit333;
+    public GameObject petit444;
+    public GameObject unite;
+    public GameObject echelle;
 
     // ------------- Variables C#   -------------------
 
     public List<string> studentsID; //Liste des élèves
-    public Teacher current_teacher; //Liste des élèves 
-    public List<Student> eleves; //Liste des élèves 
+    public Teacher current_teacher; //Liste des élèves
+    public Student current_student_stats; // élève en cours d'analyse
+    public List<Student> eleves; //Liste des élèves du professeur
     public SortedList<string, string> studentStat;//chaines de caracteres contenant toutes les statistiques correspondant a un eleve, pseudo de l'eleve est la clef
     public string enterStudentID;
 
@@ -180,16 +197,83 @@ public class TeachersScript : MonoBehaviour
     /// Stats à afficher
     public void UpdateSelectedStudent(int i)
     {
+        CloseSlideMenu();
         if (i <= studentsID.Count)
         {
             classicText.GetComponent<Text>().text = "L'élève sélectionné est " + studentsID[i];
-            statistiquesText.GetComponent<Text>().text = "Statistiques: " + studentStat[studentsID[i]];//on affiche les stat de l'eleve
+            StatsAides.SetActive(true);
+            StatsErreurs.SetActive(true);
+            StatsTemps.SetActive(true);
+            foreach (Student e in eleves)
+            {
+                if (e.username.Equals(studentsID[i]))
+                    current_student_stats = e;
+            }
+            
         }
         else
+        {
             classicText.GetComponent<Text>().text = "Aucun élève sélectionné.";
+            StatsAides.SetActive(false);
+            StatsErreurs.SetActive(false);
+            StatsTemps.SetActive(false);
+            Graphe.SetActive(false);
+        }
+            
     }
 
+    // ------- Fonctions pour les stats ------------
 
+    public void afficherStatsTemps()
+    {
+        // Vérifier que les autres stats sont bien cachées
+
+        // Afficher le graphe
+        Graphe.SetActive(true);
+        // Mettre à jour l'unité
+        unite.GetComponent<Text>().text = "(s)";
+        // Mettre à jour l'échelle et positionner les images
+        double secondesMax = 0;
+        for(int i = 1; i < current_student_stats.temps.Length; i++)
+        {
+            // On récupère le niveau et la partie
+            string[] partieNiveauTemps = current_student_stats.temps[i].Split(';');
+            int partieEnCours = int.Parse(partieNiveauTemps[0]);
+            int niveauEnCours = int.Parse(partieNiveauTemps[1]);
+            // On récupère le temps associé
+            string[] tempsTmp = partieNiveauTemps[2].Split(':');
+            double secondes = 0;
+            for (int j = 0; j < tempsTmp.Length; j++)
+            {
+                if (j == 0)
+                    secondes += double.Parse(tempsTmp[j]) * 3600;
+                if (j == 1)
+                    secondes += double.Parse(tempsTmp[j]) * 60;
+                if (j == 2)
+                    secondes += double.Parse(tempsTmp[j]);
+            }
+            if (secondes > secondesMax)
+                secondesMax = secondes;
+        }
+        echelle.GetComponent<Text>().text = (secondesMax / 2).ToString().Substring(0, 4) + "s";
+
+        // Modifier la hauteur des éléments
+        //Vector2 size = StatsAides.transform.lossyScale;
+        //size.x = 30;
+        //size.x = (size.x * StatsAides.transform.localScale.x) / StatsAides.transform.lossyScale.x;
+        //size.y = StatsAides.transform.localScale.y;
+        //StatsAides.transform.localScale = size;
+    }
+    public void afficherStatsErreurs()
+    {
+        // Vérifier que les autres stats sont bien cachées
+
+    }
+    public void afficherStatsAides()
+    {
+        // Vérifier que les autres stats sont bien cachées
+
+    }
 
     // ------- Fonctions pour le menu d'ajout d'élève ------------
 
