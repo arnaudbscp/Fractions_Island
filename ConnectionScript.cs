@@ -166,6 +166,14 @@ public class ConnectionScript : MonoBehaviour
             SceneManager.LoadScene("TeachersScreen");
     }
 
+    private void AccessToNextSceneRegister()
+    {
+        if (isAStudent)
+            SceneManager.LoadScene("Intro");
+        else
+            SceneManager.LoadScene("TeachersScreen");
+    }
+
     /// Gère la connexion au projet Firebase, la récupération du profil et le passage à la scene suivante
     public async void SignIn()
     {
@@ -222,9 +230,9 @@ public class ConnectionScript : MonoBehaviour
         teacherButton.GetComponent<Image>().color = Color.white;
 
         if (isAStudent)
-            studentButton.GetComponent<Image>().color = Color.blue;
+            studentButton.GetComponent<Image>().color = Color.yellow;
         else
-            teacherButton.GetComponent<Image>().color = Color.blue;
+            teacherButton.GetComponent<Image>().color = Color.yellow;
     }
     
     /// Gère la création de compte sur le projet firebase, l'ajout à la database et l'acces à la scene suivante
@@ -257,7 +265,7 @@ public class ConnectionScript : MonoBehaviour
             else //Si compte crée
             {
                 writeNewUser();
-                AccessToNextScene();
+                AccessToNextSceneRegister();
             }
         }
 

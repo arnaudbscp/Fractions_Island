@@ -407,7 +407,7 @@ public class TeachersScript : MonoBehaviour
             int[] clicsaides = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
             for (int i = 1; i < current_student_stats.clics_sur_aide.Length; i++)
             {
-                string[] aidesTmp = current_student_stats.nb_erreurs[i].Split(':');
+                string[] aidesTmp = current_student_stats.clics_sur_aide[i].Split(':');
                 if (aidesTmp[0].Equals("1") && aidesTmp[1].Equals("1"))
                     clicsaides[0] += 1;
                 if (aidesTmp[0].Equals("1") && aidesTmp[1].Equals("2"))
