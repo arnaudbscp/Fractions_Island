@@ -32,6 +32,7 @@ public class TeachersScript : MonoBehaviour
     public GameObject MenuEnseignant;
     public GameObject helpStat;
     public GameObject MenuJeux;
+    public GameObject MenuSettings;
     public GameObject resume1;
     public GameObject resume2;
     public GameObject resume3;
@@ -178,6 +179,13 @@ public class TeachersScript : MonoBehaviour
         MenuJeux.SetActive(true);
     }
 
+    public void OpenSettings()
+    {
+        MenuEnseignant.SetActive(false);
+        MenuJeux.SetActive(false);
+        MenuSettings.SetActive(true);
+    }
+
     public void OpenHelp()
     {
         helpStat.SetActive(true);
@@ -193,6 +201,13 @@ public class TeachersScript : MonoBehaviour
         MenuJeux.SetActive(false);
         MenuEnseignant.SetActive(true);
     }
+
+    public void Retour2()
+    {
+        MenuSettings.SetActive(false);
+        MenuEnseignant.SetActive(true);
+    }
+
     public void ouvrirResume1()
     {
         resume1.SetActive(true);
@@ -282,13 +297,16 @@ public class TeachersScript : MonoBehaviour
         else if (s == max)
         {
             posY = g.transform.position.y + 490; // le plus grand à 100%
+            if (posY > 550)
+            {
+                posY = 550;
+            }
         }
         else
         {
             double proportionValeur = (s * 100) / max;
             double proportionPixels = (proportionValeur * 490) / 100;
             posY = g.transform.position.y + (float)proportionPixels;
-
         }
         Vector2 newPos = new Vector2(posX, posY);
         g.transform.position = newPos;

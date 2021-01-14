@@ -21,6 +21,26 @@ public class ExerciceScript : MonoBehaviour
     public ItemSlot slot8=null;
     public DateTime debut;
     public DateTime fin;
+    public Text ConsigneDemo=null;
+    public GameObject boutonSon1;
+    public GameObject boutonSon2;
+    public GameObject boutonSon3;
+    public GameObject boutonSon4;
+    public AudioClip unSurDeux;
+    public AudioClip deuxSurTrois;
+    public AudioClip troisSurDeux;
+    public AudioClip quatreSurCinq;
+    public AudioClip cinqSurSix;
+    public AudioClip cinqSurSept;
+    public AudioClip sixSurCinq;
+    public AudioClip septSurCinq;
+    public AudioClip septSurNeuf;
+    public AudioClip huitSurTrois;
+    public AudioClip[] lesSons=null;
+
+    // Exercice en cours
+    public Exercice e;
+    public ExerciceDom exerciceDomino;
 
     private ItemSlot[] tableauSlots;
 
@@ -54,7 +74,7 @@ public class ExerciceScript : MonoBehaviour
               .GetReference("users/students/" + user.UserId)
               .ValueChanged += HandleValueChanged;
         }
-
+    
     }
 
     // Récupération de l'utilisateur actuel, mise à jour des infos
@@ -67,6 +87,116 @@ public class ExerciceScript : MonoBehaviour
         }
         DataSnapshot snapshot = args.Snapshot;
         current_student = JsonUtility.FromJson<Student>(snapshot.GetRawJsonValue());
+        if (current_student.progression[0] == 1 && current_student.progression[1] == 1)
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/11/").ValueChanged += HandleValueChanged2;
+        else if (current_student.progression[0] == 1 && current_student.progression[1] == 2)
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/12/").ValueChanged += HandleValueChanged2;
+        else if (current_student.progression[0] == 1 && current_student.progression[1] == 3)
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/13/").ValueChanged += HandleValueChanged3;
+        else if (current_student.progression[0] == 2 && current_student.progression[1] == 1)
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/21/").ValueChanged += HandleValueChanged3;
+        else if (current_student.progression[0] == 2 && current_student.progression[1] == 2)
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/22/").ValueChanged += HandleValueChanged3;
+        else if (current_student.progression[0] == 2 && current_student.progression[1] == 3)
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/23/").ValueChanged += HandleValueChanged3;
+        else if (current_student.progression[0] == 3 && current_student.progression[1] == 1)
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/31/").ValueChanged += HandleValueChanged3;
+        else if (current_student.progression[0] == 3 && current_student.progression[1] == 2)
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/32/").ValueChanged += HandleValueChanged3;
+        else if (current_student.progression[0] == 3 && current_student.progression[1] == 3)
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/33/").ValueChanged += HandleValueChanged3;
+        else if (current_student.progression[0] == 3 && current_student.progression[1] == 4)
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/34/").ValueChanged += HandleValueChanged3;
+    }
+
+    // Récupération de l'utilisateur actuel, mise à jour des infos
+    void HandleValueChanged2(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        DataSnapshot snapshot = args.Snapshot;
+        e = JsonUtility.FromJson<Exercice>(snapshot.GetRawJsonValue());
+        // Mise à jour de l'exercice :
+        // Mise à jour de la consigne :
+        ConsigneDemo.text = e.consigneDemo;
+        // Mise à jour de ce que l'on veut dans les slots
+        for (int i = 0; i < tableauSlots.Length; i++)
+        {
+            int nb = 0;
+            if (i == 0)
+                nb = e.Haut1[0];
+            else if (i == 1)
+                nb = e.Bas1[0];
+            else if (i == 2)
+                nb = e.Haut2[0];
+            else if (i == 3)
+                nb = e.Bas2[0];
+            else if (i == 4)
+                nb = e.Haut3[0];
+            else if (i == 5)
+                nb = e.Bas3[0];
+            else if (i == 6)
+                nb = e.Haut4[0];
+            else if (i == 7)
+                nb = e.Bas4[0];
+            tableauSlots[i].nombreAttendu = nb;
+        }
+        // Mise à jour des vocaux
+        string[] nom_audio = { "1_2", "2_3", "3_2", "4_5", "5_6", "5_7", "6_5", "7_5", "7_9", "8_3" };
+        lesSons = new AudioClip[] { unSurDeux, deuxSurTrois, troisSurDeux, quatreSurCinq, cinqSurSix, cinqSurSept, sixSurCinq, septSurCinq, septSurNeuf, huitSurTrois };
+        for (int i = 0; i < nom_audio.Length; i++)
+        {
+            if (nom_audio[i].Equals(e.boutonSon1))
+                boutonSon1.GetComponent<AudioSource>().clip = lesSons[i];
+            if (nom_audio[i].Equals(e.boutonSon2))
+                boutonSon2.GetComponent<AudioSource>().clip = lesSons[i];
+            if (nom_audio[i].Equals(e.boutonSon3))
+                boutonSon3.GetComponent<AudioSource>().clip = lesSons[i];
+            if (nom_audio[i].Equals(e.boutonSon4))
+                boutonSon4.GetComponent<AudioSource>().clip = lesSons[i];
+        }
+    }
+
+    // Récupération de l'utilisateur actuel, mise à jour des infos
+    void HandleValueChanged3(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        DataSnapshot snapshot = args.Snapshot;
+        exerciceDomino = JsonUtility.FromJson<ExerciceDom>(snapshot.GetRawJsonValue());
+        // Mise à jour de la consigne :
+        ConsigneDemo.text = exerciceDomino.consigneDemo;
+        // Mise à jour de ce que l'on veut dans les slots. 
+        for (int i = 0; i < tableauSlots.Length; i++)
+        {
+            int nb = 0;
+            if (i == 0)
+                nb = exerciceDomino.Dom1[0];
+            if (i == 1)
+                nb = exerciceDomino.Dom2[0];
+            if (i == 2)
+                nb = exerciceDomino.Dom3[0];
+            tableauSlots[i].nombreAttendu = nb;
+        }
+
+        // Mise à jour des vocaux
+        string[] nom_audio = { "1_2", "2_3", "3_2", "4_5", "5_6", "5_7", "6_5", "7_5", "7_9", "8_3" };
+        lesSons = new AudioClip[] { unSurDeux, deuxSurTrois, troisSurDeux, quatreSurCinq, cinqSurSix, cinqSurSept, sixSurCinq, septSurCinq, septSurNeuf, huitSurTrois };
+        for (int i = 0; i < nom_audio.Length; i++)
+        {
+            if (nom_audio[i].Equals(exerciceDomino.boutonSon1))
+                boutonSon1.GetComponent<AudioSource>().clip = lesSons[i];
+            if (nom_audio[i].Equals(exerciceDomino.boutonSon2))
+                boutonSon2.GetComponent<AudioSource>().clip = lesSons[i];
+            if (nom_audio[i].Equals(exerciceDomino.boutonSon3))
+                boutonSon3.GetComponent<AudioSource>().clip = lesSons[i];
+        }
     }
 
     public void Awake()
