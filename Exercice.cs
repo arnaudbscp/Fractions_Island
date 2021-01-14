@@ -3,7 +3,6 @@
 
 public class Exercice
 {
-    public int numero = 0;
     public int[] Bas1 = new int[] { 0, 2 }; // Nombre attendu; Numéro Slot
     public int[] Haut1 = new int[] { 0, 1 };
     public int[] Bas2 = new int[] { 0, 4 };

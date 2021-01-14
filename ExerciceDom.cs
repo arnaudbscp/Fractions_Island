@@ -3,7 +3,6 @@
 
 public class ExerciceDom
 {
-    public int numero = 0;
     public int[] Dom1 = new int[] { 0, 2 }; // Nombre attendu; Numéro Slot
     public int[] Dom2 = new int[] { 0, 1 };
     public int[] Dom3 = new int[] { 0, 4 };

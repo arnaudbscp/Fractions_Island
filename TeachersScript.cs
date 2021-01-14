@@ -26,6 +26,7 @@ public class TeachersScript : MonoBehaviour
     public GameObject slideMenu;
     public GameObject slideMenuOpenButton;
     public GameObject addStudentMenu;
+    public GameObject verifEdit;
     public GameObject alertText;
     public GameObject classicText;
     public GameObject statistiquesText;
@@ -36,6 +37,9 @@ public class TeachersScript : MonoBehaviour
     public GameObject resume1;
     public GameObject resume2;
     public GameObject resume3;
+    public GameObject jeu11Edit;
+    public GameObject jeu12Edit;
+    public GameObject consignesEdit;
     // Stats
     public GameObject StatsTemps;
     public GameObject StatsErreurs;
@@ -57,6 +61,19 @@ public class TeachersScript : MonoBehaviour
     public GameObject echelle1;
     public GameObject echelle2;
     public GameObject echelle3;
+    // Modifier jeux
+    public Dropdown drop111;
+    public Dropdown drop112;
+    public Dropdown drop113;
+    public Dropdown drop114;
+    public Dropdown drop121;
+    public Dropdown drop122;
+    public Dropdown drop123;
+    public Dropdown drop124;
+    public InputField consigne;
+    // Récupérer exercice
+    public Exercice exo;
+    public ExerciceDom exo2;
 
     // ------------- Variables C#   -------------------
 
@@ -208,6 +225,43 @@ public class TeachersScript : MonoBehaviour
         MenuEnseignant.SetActive(true);
     }
 
+    public void ouvrirJeu1()
+    {
+        jeu12Edit.SetActive(false);
+        consignesEdit.SetActive(false);
+        jeu11Edit.SetActive(true);
+
+        // Récupérer le jeu 1
+        FirebaseDatabase.DefaultInstance.GetReference("exercices/11/").ValueChanged += HandleValueChanged2;
+    }
+
+    public void ouvrirVerif()
+    {
+        verifEdit.SetActive(true);
+    }
+
+    public void fermerVerif()
+    {
+        verifEdit.SetActive(false);
+    }
+
+    public void ouvrirJeu2()
+    {
+        jeu11Edit.SetActive(false);
+        consignesEdit.SetActive(false);
+        jeu12Edit.SetActive(true);
+
+        // Récupérer le jeu 2
+        FirebaseDatabase.DefaultInstance.GetReference("exercices/12/").ValueChanged += HandleValueChanged3;
+    }
+
+    public void ouvrirConsigne()
+    {
+        jeu11Edit.SetActive(false);
+        jeu12Edit.SetActive(false);
+        consignesEdit.SetActive(true);
+    }
+
     public void ouvrirResume1()
     {
         resume1.SetActive(true);
@@ -277,6 +331,164 @@ public class TeachersScript : MonoBehaviour
         }
             
     }
+
+    // ---------------------------------------------
+    // ---------------------------------------------
+    // ------- Fonctions éditions de jeux ----------
+    // ---------------------------------------------
+
+    // Mise à jour de la consigne
+    public void editerConsigne(Dropdown dd)
+    {
+        // Récupérer l'exercice
+        string refeData = "";
+        if (dd.value == 0)
+        {
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/11/").ValueChanged += HandleValueChanged2;
+            refeData = "11";
+        }
+        else if (dd.value == 1)
+        {
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/12/").ValueChanged += HandleValueChanged3;
+            refeData = "12";
+        }
+        else if (dd.value > 1)
+        {
+            if (dd.value == 2)
+                refeData = "13";
+            if (dd.value == 3)
+                refeData = "21";
+            if (dd.value == 4)
+                refeData = "22";
+            if (dd.value == 5)
+                refeData = "23";
+            if (dd.value == 6)
+                refeData = "31";
+            if (dd.value == 7)
+                refeData = "32";
+            if (dd.value == 8)
+                refeData = "33";
+            if (dd.value == 9)
+                refeData = "34";
+            FirebaseDatabase.DefaultInstance.GetReference("exercices/" + refeData + "/").ValueChanged += HandleValueChanged4;
+        }
+        //Mise à jour de la consigne
+        if (int.Parse(refeData) < 13)
+        {
+            exo.consigneDemo = consigne.text;
+            reference.Child("exercices/" + refeData + "/consigneDemo/").SetValueAsync(consigne.text);
+        }
+        else
+        {
+            exo2.consigneDemo = consigne.text;
+            reference.Child("exercices/" + refeData + "/consigneDemo/").SetValueAsync(consigne.text);
+        }
+
+    }
+
+    // Mise à jour de l'exercice
+    public void editerExercice(Dropdown dd)
+    {
+        string[] nom_audio = { "1_2", "2_3", "3_2", "4_5", "5_6", "5_7", "6_5", "7_5", "7_9", "8_3" };
+        string json = "";
+        if (dd.name.Equals("drop111") || dd.name.Equals("drop121"))
+        {
+            exo.boutonSon1 = nom_audio[dd.value];
+            exo.Haut1[0] = int.Parse(nom_audio[dd.value].Substring(0, 1));
+            exo.Bas1[0] = int.Parse(nom_audio[dd.value].Substring(2, 1));
+            json = JsonUtility.ToJson(exo);
+        }
+        if (dd.name.Equals("drop112") || dd.name.Equals("drop122"))
+        {
+            exo.boutonSon2 = nom_audio[dd.value];
+            exo.Haut2[0] = int.Parse(nom_audio[dd.value].Substring(0, 1));
+            exo.Bas2[0] = int.Parse(nom_audio[dd.value].Substring(2, 1));
+            json = JsonUtility.ToJson(exo);
+        }
+        if (dd.name.Equals("drop113") || dd.name.Equals("drop123"))
+        {
+            exo.boutonSon3 = nom_audio[dd.value];
+            exo.Haut3[0] = int.Parse(nom_audio[dd.value].Substring(0, 1));
+            exo.Bas3[0] = int.Parse(nom_audio[dd.value].Substring(2, 1));
+            json = JsonUtility.ToJson(exo);
+        }
+        if (dd.name.Equals("drop114") || dd.name.Equals("drop124"))
+        {
+            exo.boutonSon4 = nom_audio[dd.value];
+            exo.Haut4[0] = int.Parse(nom_audio[dd.value].Substring(0, 1));
+            exo.Bas4[0] = int.Parse(nom_audio[dd.value].Substring(2, 1));
+            json = JsonUtility.ToJson(exo);
+        }
+        if (dd.name.Equals("drop114") || dd.name.Equals("drop112") || dd.name.Equals("drop113") || dd.name.Equals("drop111"))
+            reference.Child("exercices/11/").SetRawJsonValueAsync(json);
+        else
+            reference.Child("exercices/12/").SetRawJsonValueAsync(json);
+    }
+
+    // Récupération de l'exercice 1.1
+    void HandleValueChanged2(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        DataSnapshot snapshot = args.Snapshot;
+        exo = JsonUtility.FromJson<Exercice>(snapshot.GetRawJsonValue());
+        // Mise à jour de la valeur des selects :
+        string[] nom_audio = { "1_2", "2_3", "3_2", "4_5", "5_6", "5_7", "6_5", "7_5", "7_9", "8_3" };
+
+        for (int i = 0; i < nom_audio.Length; i++)
+        {
+            if (nom_audio[i].Equals(exo.boutonSon1))
+                drop111.value = i;
+            if (nom_audio[i].Equals(exo.boutonSon2))
+                drop112.value = i;
+            if (nom_audio[i].Equals(exo.boutonSon3))
+                drop113.value = i;
+            if (nom_audio[i].Equals(exo.boutonSon4))
+                drop114.value = i;
+        }
+    }
+
+    // Récupération de l'exercice 1.2
+    void HandleValueChanged3(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        DataSnapshot snapshot = args.Snapshot;
+        exo = JsonUtility.FromJson<Exercice>(snapshot.GetRawJsonValue());
+        // Mise à jour de la valeur des selects :
+        string[] nom_audio = { "1_2", "2_3", "3_2", "4_5", "5_6", "5_7", "6_5", "7_5", "7_9", "8_3" };
+
+        for (int i = 0; i < nom_audio.Length; i++)
+        {
+            if (nom_audio[i].Equals(exo.boutonSon1))
+                drop121.value = i;
+            if (nom_audio[i].Equals(exo.boutonSon2))
+                drop122.value = i;
+            if (nom_audio[i].Equals(exo.boutonSon3))
+                drop123.value = i;
+            if (nom_audio[i].Equals(exo.boutonSon4))
+                drop124.value = i;
+        }
+    }
+
+    // Récupération des autres exercices
+    void HandleValueChanged4(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        DataSnapshot snapshot = args.Snapshot;
+        exo2 = JsonUtility.FromJson<ExerciceDom>(snapshot.GetRawJsonValue());
+    }
+
 
     // ---------------------------------------------
     // ---------------------------------------------

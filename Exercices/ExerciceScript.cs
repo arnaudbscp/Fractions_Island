@@ -38,6 +38,7 @@ public class ExerciceScript : MonoBehaviour
     public AudioClip huitSurTrois;
     public AudioClip[] lesSons=null;
 
+
     // Exercice en cours
     public Exercice e;
     public ExerciceDom exerciceDomino;
